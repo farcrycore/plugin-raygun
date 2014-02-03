@@ -17,6 +17,14 @@
 			<cfset stResult[key] = arguments[key] />
 		</cfloop>
 		
+		<cfif structkeyexists(application,"security")>
+			<cfset stResult.username = application.security.getCurrentUserID() />
+		<cfelse>
+			<cfset stResult.username = "" />
+		</cfif>
+		
+		<cfset stResult.session = getSession() />
+		
 		<cfreturn stResult />
 	</cffunction>
 	
@@ -35,6 +43,7 @@
 		<cfset var oFile = "" />
 		<cfset var aRoots = "" />
 		<cfset var runtime = "" />
+		<cfset var key = "" />
 		
 		<cfif isdefined("application.config.raygun.apiKey") and len(application.config.raygun.apiKey)>
 			<cfset system = createObject("java", "java.lang.System") />
@@ -110,7 +119,6 @@
 			<cfset stMessage["details"]["tags"] = JavaCast("null","") />
 			<cfset stMessage["details"]["userCustomData"] = structnew() />
 			<cfset stMessage["details"]["userCustomData"]["instanceName"] = arguments.data.instanceName />
-			<cfset stMessage["details"]["userCustomData"]["browser"] = arguments.data.browser />
 			<cfif isdefined("application.plugins")>
 				<cfset stMessage["details"]["userCustomData"]["plugins"] = application.plugins />
 			</cfif>
@@ -121,12 +129,21 @@
 			<cfset stMessage["details"]["request"]["hostName"] = arguments.data.host />
 			<cfset stMessage["details"]["request"]["url"] = arguments.data.scriptname />
 			<cfset stMessage["details"]["request"]["httpMethod"] = CGI.REQUEST_METHOD />
-			<cfset stMessage["details"]["request"]["ipAddress"] = arguments.data.remoteaddress />
+			<cfset stMessage["details"]["request"]["iPAddress"] = arguments.data.remoteaddress />
 			<cfset stMessage["details"]["request"]["queryString"] = arguments.data.querystring />
-			<cfset stMessage["details"]["request"]["form"] = FORM />
+			<cfset stMessage["details"]["request"]["userAgent"] = CGI.HTTP_USER_AGENT />
+			<cfset stMessage["details"]["request"]["form"] = structnew() />
+			<cfloop collection="#form#" item="key">
+				<cfif key neq "fieldnames">
+					<cfset stMessage["details"]["request"]["form"][key] = left(form[key],256) />
+				</cfif>
+			</cfloop>
 			<cfset stMessage["details"]["request"]["headers"] = getHttpRequestData().headers />
 			<cfset stMessage["details"]["request"]["data"] = CGI />
 			<cfset stMessage["details"]["request"]["raw"] = JavaCast("null","") />
+			<cfset stMessage["details"]["request"]["session"] = arguments.data.session />
+			<cfset stMessage["details"]["user"] = structnew() />
+			<cfset stMessage["details"]["user"]["identifier"] = arguments.data.username />
 			
 			<cfhttp url="https://api.raygun.io/entries" method="post" charset="utf-8" timeout="0">
 				<cfhttpparam type="header" name="Content-Type" value="application/json"/>
@@ -134,6 +151,31 @@
 				<cfhttpparam type="body" value="#serializeJSON(stMessage)#" />
 			</cfhttp>
 		</cfif>
+	</cffunction>
+	
+	<cffunction name="getSession" access="public" output="false" returntype="struct" hint="Returns the session in a flattened-to-dot-notation struct">
+		<cfargument name="varstem" type="string" required="false" default="" />
+		<cfargument name="base" type="any" required="false" default="#session#" />
+		<cfargument name="result" type="struct" required="false" default="#structnew()#" />
+		
+		<cfset var key = "" />
+		<cfset var stem = "" />
+		
+		<cfif issimplevalue(arguments.base)>
+			<cfset arguments.result[arguments.varstem] = arguments.base />
+		<cfelseif isstruct(arguments.base)>
+			<cfloop collection="#arguments.base#" item="key">
+				<cfif not listfindnocase("Tempobjectstore,Objectadminfilterobjects,Urltoken,Objectadmin,Writingdir,Dmsec.AUTHENTICATION,Sessionid,Userlanguage",listappend(arguments.varstem,key,"."))>
+					<cfset getSession(listappend(arguments.varstem,key,"."),arguments.base[key],arguments.result) />
+				</cfif>
+			</cfloop>
+		<cfelseif isarray(arguments.base)>
+			<cfloop from="1" to="#arraylen(arguments.base)#" index="key">
+				<cfset getSession(arguments.varstem & "[" & key & "]",arguments.base[key],arguments.result) />
+			</cfloop>
+		</cfif>
+		
+		<cfreturn arguments.result />
 	</cffunction>
 	
 	
