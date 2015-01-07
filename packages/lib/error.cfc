@@ -44,8 +44,9 @@
 		<cfset var aRoots = "" />
 		<cfset var runtime = "" />
 		<cfset var key = "" />
+		<cfset var apiKey = application.fapi.getConfig("raygun", "apiKey", "") />
 		
-		<cfif isdefined("application.config.raygun.apiKey") and len(application.config.raygun.apiKey)>
+		<cfif len(apiKey)>
 			<cfset system = createObject("java", "java.lang.System") />
 			<cfset props = system.getProperties() />
 			<cfset mf = createObject("java", "java.lang.management.ManagementFactory") />
@@ -147,7 +148,7 @@
 			
 			<cfhttp url="https://api.raygun.io/entries" method="post" charset="utf-8" timeout="0">
 				<cfhttpparam type="header" name="Content-Type" value="application/json"/>
-				<cfhttpparam type="header" name="X-ApiKey" value="#application.config.raygun.apiKey#"/>
+				<cfhttpparam type="header" name="X-ApiKey" value="#apiKey#"/>
 				<cfhttpparam type="body" value="#serializeJSON(stMessage)#" />
 			</cfhttp>
 		</cfif>
