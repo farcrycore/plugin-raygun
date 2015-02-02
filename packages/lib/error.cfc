@@ -156,12 +156,20 @@
 	
 	<cffunction name="getSession" access="public" output="false" returntype="struct" hint="Returns the session in a flattened-to-dot-notation struct">
 		<cfargument name="varstem" type="string" required="false" default="" />
-		<cfargument name="base" type="any" required="false" default="#session#" />
+		<cfargument name="base" type="any" required="false" />
 		<cfargument name="result" type="struct" required="false" default="#structnew()#" />
 		
 		<cfset var key = "" />
 		<cfset var stem = "" />
-		
+
+		<cfif not structkeyexists(arguments, "base")>
+			<cfif isdefined("session")>
+				<cfset arguments.base = session />
+			<cfelse>
+				<cfreturn arguments.result />
+			</cfif>
+		</cfif>
+
 		<cfif issimplevalue(arguments.base)>
 			<cfset arguments.result[arguments.varstem] = arguments.base />
 		<cfelseif isstruct(arguments.base)>
