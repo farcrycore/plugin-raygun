@@ -196,14 +196,18 @@
 		
 		<cfset var errorJSON = "" />
 		<cfset var logtype = "error" />
+		<cfset var key = hash(arguments.log.message) />
 		
 		<cfif structkeyexists(arguments.log,"logtype")>
 			<cfset logtype = arguments.log.logtype />
 			<cfset structdelete(arguments.log,"logtype") />
 		</cfif>
 		
-		<cfif logtype eq "error">
+		<cfparam name="request.loggedToRaygun" default="" />
+
+		<cfif logtype eq "error" and not listfind(request.loggedToRaygun, key)>
 			<cfset logToRaygun(logtype,arguments.log) />
+			<cfset request.loggedToRaygun = listAppend(request.loggedToRaygun, key) />
 		</cfif>
 		
 		<cfset super.logData(argumentCollection=arguments) />
