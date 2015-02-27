@@ -75,9 +75,6 @@
 			<cfif structKeyExists(arguments.data, "detail") and len(arguments.data.detail)>
 				<cfset stMessage["details"]["error"]["data"]["detail"] = arguments.data.detail />
 			</cfif>
-			<cfif structKeyExists(arguments.data, "extended_info") and len(arguments.data.extended_info)>
-				<cfset stMessage["details"]["error"]["data"]["extended_info"] = arguments.data.extended_info />
-			</cfif>
 			<cfif structKeyExists(arguments.data, "queryError") and len(arguments.data.queryError)>
 				<cfset stMessage["details"]["error"]["data"]["queryError"] = arguments.data.queryError />
 			</cfif>
@@ -125,6 +122,9 @@
 			</cfif>
 			<cfif isdefined("application.fcstats.updateapp")>
 				<cfset stMessage["details"]["userCustomData"]["appStart"] = dateformat(application.fcstats.updateapp.when[application.fcstats.updateapp.recordcount],"yyyy-mm-dd") & "T" & timeformat(application.fcstats.updateapp.when[application.fcstats.updateapp.recordcount],"HH:mm:ss") & "Z" />
+			</cfif>
+			<cfif structKeyExists(arguments.data, "extended_info") and len(arguments.data.extended_info)>
+				<cfset stMessage["details"]["userCustomData"]["extended_info"] = arguments.data.extended_info />
 			</cfif>
 			<cfset stMessage["details"]["request"] = structnew() />
 			<cfset stMessage["details"]["request"]["hostName"] = arguments.data.host />
