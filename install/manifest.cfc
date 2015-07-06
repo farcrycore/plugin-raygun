@@ -8,7 +8,7 @@
 	
 	<cffunction name="getStatus" output="false" access="public" returntype="string">
 		
-		<cfif isdefined("application.config.raygun.apiKey") and len(application.config.raygun.apiKey)>
+		<cfif len(application.fapi.getConfig('raygun', 'apiKey', ''))>
 			<cfreturn "good" />
 		<cfelse>
 			<cfreturn "bad" />
