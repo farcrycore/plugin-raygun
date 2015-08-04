@@ -32,125 +32,115 @@
 		<cfargument name="type" type="string" required="true" hint="Log type" />
 		<cfargument name="data" type="struct" requried="true" hint="A normalized error struct as produced by the core error library" />
 		
-		<cfset var cfhttp = structnew() />
-		<cfset var stMessage = structnew() />
-		<cfset var i = 0 />
-		<cfset var stSub = "" />
-		<cfset var system = "" />
-		<cfset var props = "" />
-		<cfset var mf = "" />
-		<cfset var osbean = "" />
-		<cfset var oFile = "" />
-		<cfset var aRoots = "" />
-		<cfset var runtime = "" />
-		<cfset var key = "" />
 		<cfset var apiKey = application.fapi.getConfig("raygun", "apiKey", "") />
 		
 		<cfif len(apiKey)>
-			<cfset system = createObject("java", "java.lang.System") />
-			<cfset props = system.getProperties() />
-			<cfset mf = createObject("java", "java.lang.management.ManagementFactory") />
-			<cfset osbean = mf.getOperatingSystemMXBean() />
-			<cfset oFile = createObject("java", "java.io.File") />
-			<cfset aRoots = oFile.listRoots() />
-			<cfset runtime = CreateObject("java","java.lang.Runtime").getRuntime()>
-			
-			<cfset stMessage["occurredOn"] = dateformat(arguments.data.datetime,"yyyy-mm-dd") & "T" & timeformat(arguments.data.datetime,"HH:mm:ss") & "Z" />
-			<cfset stMessage["details"] = structnew() />
-			<cfset stMessage["details"]["machineName"] = arguments.data.machinename />
-			<cfset stMessage["details"]["version"] = JavaCast("null","") />
-			<cfset stMessage["details"]["client"] = structnew() />
-			<cfset stMessage["details"]["client"]["name"] = JavaCast("null","") />
-			<cfset stMessage["details"]["client"]["version"] = JavaCast("null","") />
-			<cfset stMessage["details"]["client"]["clientUrl"] = JavaCast("null","") />
-			<cfset stMessage["details"]["error"] = structnew() />
-			<cfset stMessage["details"]["error"]["innerError"] = JavaCast("null","") />
-			<cfset stMessage["details"]["error"]["data"] = structnew() />
-			<cfif structKeyExists(arguments.data, "type") and len(arguments.data.type)>
-				<cfset stMessage["details"]["error"]["data"]["type"] = arguments.data.type />
-			</cfif>
-			<cfif structKeyExists(arguments.data, "errorcode") and len(arguments.data.errorcode)>
-				<cfset stMessage["details"]["error"]["data"]["errorcode"] = arguments.data.errorcode />
-			</cfif>
-			<cfif structKeyExists(arguments.data, "detail") and len(arguments.data.detail)>
-				<cfset stMessage["details"]["error"]["data"]["detail"] = arguments.data.detail />
-			</cfif>
-			<cfif structKeyExists(arguments.data, "queryError") and len(arguments.data.queryError)>
-				<cfset stMessage["details"]["error"]["data"]["queryError"] = arguments.data.queryError />
-			</cfif>
-			<cfif structKeyExists(arguments.data, "sql") and len(arguments.data.sql)>
-				<cfset stMessage["details"]["error"]["data"]["sql"] = arguments.data.sql />
-			</cfif>
-			<cfif structKeyExists(arguments.data, "where") and len(arguments.data.where)>
-				<cfset stMessage["details"]["error"]["data"]["where"] = arguments.data.where />
-			</cfif>
-			<cfset stMessage["details"]["error"]["className"] = JavaCast("null","") />
-			<cfset stMessage["details"]["error"]["message"] = arguments.data.message />
-			<cfset stMessage["details"]["error"]["stackTrace"] = arraynew(1) />
-			<cfloop from="1" to="#arraylen(arguments.data.stack)#" index="i">
-				<cfset stSub = structnew() />
-				<cfset stSub["lineNumber"] = arguments.data.stack[i].line />
-				<cfset stSub["className"] = JavaCast("null","") />
-				<cfset stSub["fileName"] = arguments.data.stack[i].template />
-				<cfset arrayappend(stMessage["details"]["error"]["stackTrace"],stSub) />
-			</cfloop>
-			<cfset stMessage["details"]["environment"] = structnew() />
-			<cfset stMessage["details"]["environment"]["processorCount"] = osbean.getAvailableProcessors() />
-			<cfset stMessage["details"]["environment"]["osVersion"] = props["os.name"] & "|" & props["os.version"] />
-			<cfset stMessage["details"]["environment"]["windowBoundsWidth"] = JavaCast("null","") />
-			<cfset stMessage["details"]["environment"]["windowBoundsHeight"] = JavaCast("null","") />
-			<cfset stMessage["details"]["environment"]["resolutionScale"] = JavaCast("null","") />
-			<cfset stMessage["details"]["environment"]["currentOrientation"] = JavaCast("null","") />
-			<cfset stMessage["details"]["environment"]["cpu"] = osbean.getProcessCpuTime() />
-			<cfset stMessage["details"]["environment"]["packageVersion"] = props["java.vm.vendor"] & "|" & props["java.runtime.version"] & "|" & props["java.vm.name"] />
-			<cfset stMessage["details"]["environment"]["architecture"] = props["os.arch"] />
-			<cfset stMessage["details"]["environment"]["totalPhysicalMemory"] = osbean.getTotalPhysicalMemorySize() />
-			<cfset stMessage["details"]["environment"]["availablePhysicalMemory"] = osbean.getFreePhysicalMemorySize() />
-			<cfset stMessage["details"]["environment"]["totalVirtualMemory"] = JavaCast("null","") />
-			<cfset stMessage["details"]["environment"]["availableVirtualMemory"] = JavaCast("null","") />
-			<cfset stMessage["details"]["environment"]["diskSpaceFree"] = arraynew(1) />
-			<cfloop from="1" to="#arraylen(aRoots)#" index="i">
-				<cfset arrayappend(stMessage["details"]["environment"]["diskSpaceFree"],aRoots[i].getFreeSpace()) />
-			</cfloop> 
-			<cfset stMessage["details"]["environment"]["deviceName"] = JavaCast("null","") />
-			<cfset stMessage["details"]["environment"]["locale"] = JavaCast("null","") />
-			<cfset stMessage["details"]["tags"] = JavaCast("null","") />
-			<cfset stMessage["details"]["userCustomData"] = structnew() />
-			<cfset stMessage["details"]["userCustomData"]["instanceName"] = arguments.data.instanceName />
-			<cfif isdefined("application.plugins")>
-				<cfset stMessage["details"]["userCustomData"]["plugins"] = application.plugins />
-			</cfif>
-			<cfif isdefined("application.fcstats.updateapp")>
-				<cfset stMessage["details"]["userCustomData"]["appStart"] = dateformat(application.fcstats.updateapp.when[application.fcstats.updateapp.recordcount],"yyyy-mm-dd") & "T" & timeformat(application.fcstats.updateapp.when[application.fcstats.updateapp.recordcount],"HH:mm:ss") & "Z" />
-			</cfif>
-			<cfif structKeyExists(arguments.data, "extended_info") and len(arguments.data.extended_info)>
-				<cfset stMessage["details"]["userCustomData"]["extended_info"] = arguments.data.extended_info />
-			</cfif>
-			<cfset stMessage["details"]["request"] = structnew() />
-			<cfset stMessage["details"]["request"]["hostName"] = arguments.data.host />
-			<cfset stMessage["details"]["request"]["url"] = arguments.data.scriptname />
-			<cfset stMessage["details"]["request"]["httpMethod"] = CGI.REQUEST_METHOD />
-			<cfset stMessage["details"]["request"]["iPAddress"] = arguments.data.remoteaddress />
-			<cfset stMessage["details"]["request"]["queryString"] = arguments.data.querystring />
-			<cfset stMessage["details"]["request"]["userAgent"] = CGI.HTTP_USER_AGENT />
-			<cfset stMessage["details"]["request"]["form"] = structnew() />
-			<cfloop collection="#form#" item="key">
-				<cfif key neq "fieldnames">
-					<cfset stMessage["details"]["request"]["form"][key] = left(form[key],256) />
+			<cfthread action="run" name="log-error" data="#arguments.data#" apiKey="#apiKey#" headers="#getHttpRequestData().headers#">
+				<cfset system = createObject("java", "java.lang.System") />
+				<cfset props = system.getProperties() />
+				<cfset mf = createObject("java", "java.lang.management.ManagementFactory") />
+				<cfset osbean = mf.getOperatingSystemMXBean() />
+				<cfset oFile = createObject("java", "java.io.File") />
+				<cfset aRoots = oFile.listRoots() />
+				<cfset runtime = CreateObject("java","java.lang.Runtime").getRuntime()>
+				
+				<cfset stMessage["occurredOn"] = dateformat(attributes.data.datetime,"yyyy-mm-dd") & "T" & timeformat(attributes.data.datetime,"HH:mm:ss") & "Z" />
+				<cfset stMessage["details"] = structnew() />
+				<cfset stMessage["details"]["machineName"] = attributes.data.machinename />
+				<cfset stMessage["details"]["version"] = JavaCast("null","") />
+				<cfset stMessage["details"]["client"] = structnew() />
+				<cfset stMessage["details"]["client"]["name"] = JavaCast("null","") />
+				<cfset stMessage["details"]["client"]["version"] = JavaCast("null","") />
+				<cfset stMessage["details"]["client"]["clientUrl"] = JavaCast("null","") />
+				<cfset stMessage["details"]["error"] = structnew() />
+				<cfset stMessage["details"]["error"]["innerError"] = JavaCast("null","") />
+				<cfset stMessage["details"]["error"]["data"] = structnew() />
+				<cfif structKeyExists(attributes.data, "type") and len(attributes.data.type)>
+					<cfset stMessage["details"]["error"]["data"]["type"] = attributes.data.type />
 				</cfif>
-			</cfloop>
-			<cfset stMessage["details"]["request"]["headers"] = getHttpRequestData().headers />
-			<cfset stMessage["details"]["request"]["data"] = CGI />
-			<cfset stMessage["details"]["request"]["raw"] = JavaCast("null","") />
-			<cfset stMessage["details"]["request"]["session"] = arguments.data.session />
-			<cfset stMessage["details"]["user"] = structnew() />
-			<cfset stMessage["details"]["user"]["identifier"] = arguments.data.username />
-			
-			<cfhttp url="https://api.raygun.io/entries" method="post" charset="utf-8" timeout="0">
-				<cfhttpparam type="header" name="Content-Type" value="application/json"/>
-				<cfhttpparam type="header" name="X-ApiKey" value="#apiKey#"/>
-				<cfhttpparam type="body" value="#serializeJSON(stMessage)#" />
-			</cfhttp>
+				<cfif structKeyExists(attributes.data, "errorcode") and len(attributes.data.errorcode)>
+					<cfset stMessage["details"]["error"]["data"]["errorcode"] = attributes.data.errorcode />
+				</cfif>
+				<cfif structKeyExists(attributes.data, "detail") and len(attributes.data.detail)>
+					<cfset stMessage["details"]["error"]["data"]["detail"] = attributes.data.detail />
+				</cfif>
+				<cfif structKeyExists(attributes.data, "queryError") and len(attributes.data.queryError)>
+					<cfset stMessage["details"]["error"]["data"]["queryError"] = attributes.data.queryError />
+				</cfif>
+				<cfif structKeyExists(attributes.data, "sql") and len(attributes.data.sql)>
+					<cfset stMessage["details"]["error"]["data"]["sql"] = attributes.data.sql />
+				</cfif>
+				<cfif structKeyExists(attributes.data, "where") and len(attributes.data.where)>
+					<cfset stMessage["details"]["error"]["data"]["where"] = attributes.data.where />
+				</cfif>
+				<cfset stMessage["details"]["error"]["className"] = JavaCast("null","") />
+				<cfset stMessage["details"]["error"]["message"] = attributes.data.message />
+				<cfset stMessage["details"]["error"]["stackTrace"] = arraynew(1) />
+				<cfloop from="1" to="#arraylen(attributes.data.stack)#" index="i">
+					<cfset stSub = structnew() />
+					<cfset stSub["lineNumber"] = attributes.data.stack[i].line />
+					<cfset stSub["className"] = JavaCast("null","") />
+					<cfset stSub["fileName"] = attributes.data.stack[i].template />
+					<cfset arrayappend(stMessage["details"]["error"]["stackTrace"],stSub) />
+				</cfloop>
+				<cfset stMessage["details"]["environment"] = structnew() />
+				<cfset stMessage["details"]["environment"]["processorCount"] = osbean.getAvailableProcessors() />
+				<cfset stMessage["details"]["environment"]["osVersion"] = props["os.name"] & "|" & props["os.version"] />
+				<cfset stMessage["details"]["environment"]["windowBoundsWidth"] = JavaCast("null","") />
+				<cfset stMessage["details"]["environment"]["windowBoundsHeight"] = JavaCast("null","") />
+				<cfset stMessage["details"]["environment"]["resolutionScale"] = JavaCast("null","") />
+				<cfset stMessage["details"]["environment"]["currentOrientation"] = JavaCast("null","") />
+				<cfset stMessage["details"]["environment"]["cpu"] = osbean.getProcessCpuTime() />
+				<cfset stMessage["details"]["environment"]["packageVersion"] = props["java.vm.vendor"] & "|" & props["java.runtime.version"] & "|" & props["java.vm.name"] />
+				<cfset stMessage["details"]["environment"]["architecture"] = props["os.arch"] />
+				<cfset stMessage["details"]["environment"]["totalPhysicalMemory"] = osbean.getTotalPhysicalMemorySize() />
+				<cfset stMessage["details"]["environment"]["availablePhysicalMemory"] = osbean.getFreePhysicalMemorySize() />
+				<cfset stMessage["details"]["environment"]["totalVirtualMemory"] = JavaCast("null","") />
+				<cfset stMessage["details"]["environment"]["availableVirtualMemory"] = JavaCast("null","") />
+				<cfset stMessage["details"]["environment"]["diskSpaceFree"] = arraynew(1) />
+				<cfloop from="1" to="#arraylen(aRoots)#" index="i">
+					<cfset arrayappend(stMessage["details"]["environment"]["diskSpaceFree"],aRoots[i].getFreeSpace()) />
+				</cfloop> 
+				<cfset stMessage["details"]["environment"]["deviceName"] = JavaCast("null","") />
+				<cfset stMessage["details"]["environment"]["locale"] = JavaCast("null","") />
+				<cfset stMessage["details"]["tags"] = JavaCast("null","") />
+				<cfset stMessage["details"]["userCustomData"] = structnew() />
+				<cfset stMessage["details"]["userCustomData"]["instanceName"] = attributes.data.instanceName />
+				<cfif isdefined("application.plugins")>
+					<cfset stMessage["details"]["userCustomData"]["plugins"] = application.plugins />
+				</cfif>
+				<cfif isdefined("application.fcstats.updateapp")>
+					<cfset stMessage["details"]["userCustomData"]["appStart"] = dateformat(application.fcstats.updateapp.when[application.fcstats.updateapp.recordcount],"yyyy-mm-dd") & "T" & timeformat(application.fcstats.updateapp.when[application.fcstats.updateapp.recordcount],"HH:mm:ss") & "Z" />
+				</cfif>
+				<cfif structKeyExists(attributes.data, "extended_info") and len(attributes.data.extended_info)>
+					<cfset stMessage["details"]["userCustomData"]["extended_info"] = attributes.data.extended_info />
+				</cfif>
+				<cfset stMessage["details"]["request"] = structnew() />
+				<cfset stMessage["details"]["request"]["hostName"] = attributes.data.host />
+				<cfset stMessage["details"]["request"]["url"] = attributes.data.scriptname />
+				<cfset stMessage["details"]["request"]["httpMethod"] = CGI.REQUEST_METHOD />
+				<cfset stMessage["details"]["request"]["iPAddress"] = arguments.data.remoteaddress />
+				<cfset stMessage["details"]["request"]["queryString"] = arguments.data.querystring />
+				<cfset stMessage["details"]["request"]["userAgent"] = CGI.HTTP_USER_AGENT />
+				<cfset stMessage["details"]["request"]["form"] = structnew() />
+				<cfloop collection="#form#" item="key">
+					<cfif key neq "fieldnames">
+						<cfset stMessage["details"]["request"]["form"][key] = left(form[key],256) />
+					</cfif>
+				</cfloop>
+				<cfset stMessage["details"]["request"]["headers"] = attributes.headers />
+				<cfset stMessage["details"]["request"]["data"] = CGI />
+				<cfset stMessage["details"]["request"]["raw"] = JavaCast("null","") />
+				<cfset stMessage["details"]["request"]["session"] = arguments.data.session />
+				<cfset stMessage["details"]["user"] = structnew() />
+				<cfset stMessage["details"]["user"]["identifier"] = arguments.data.username />
+				
+				<cfhttp url="https://api.raygun.io/entries" method="post" charset="utf-8" timeout="0">
+					<cfhttpparam type="header" name="Content-Type" value="application/json"/>
+					<cfhttpparam type="header" name="X-ApiKey" value="#attributes.apiKey#"/>
+					<cfhttpparam type="body" value="#serializeJSON(stMessage)#" />
+				</cfhttp>
+			</cfthread>
 		</cfif>
 	</cffunction>
 	
@@ -202,15 +192,17 @@
 			<cfset logtype = arguments.log.logtype />
 			<cfset structdelete(arguments.log,"logtype") />
 		</cfif>
+
+		<cfset super.logData(argumentCollection=arguments) />
 		
 		<cfparam name="request.loggedToRaygun" default="" />
 
 		<cfif logtype eq "error" and not listfind(request.loggedToRaygun, key)>
-			<cfset logToRaygun(logtype,arguments.log) />
+			<cfthread name="logToRaygun" priority="LOW" logType="#logType#" log="#arguments.log#">
+				<cfset logToRaygun(attributes.logtype, attributes.log) />
+			</cfthread>
 			<cfset request.loggedToRaygun = listAppend(request.loggedToRaygun, key) />
 		</cfif>
-		
-		<cfset super.logData(argumentCollection=arguments) />
 	</cffunction>
 	
 </cfcomponent>
