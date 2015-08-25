@@ -198,9 +198,7 @@
 		<cfparam name="request.loggedToRaygun" default="" />
 
 		<cfif logtype eq "error" and not listfind(request.loggedToRaygun, key)>
-			<cfthread name="logToRaygun" priority="LOW" logType="#logType#" log="#arguments.log#">
-				<cfset logToRaygun(attributes.logtype, attributes.log) />
-			</cfthread>
+			<cfset logToRaygun(logType, arguments.log) />
 			<cfset request.loggedToRaygun = listAppend(request.loggedToRaygun, key) />
 		</cfif>
 	</cffunction>
