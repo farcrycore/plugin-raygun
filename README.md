@@ -1,7 +1,6 @@
 # Raygun Error Handling Plugin
 
-> Only for use with the **FarCry Commercial License**.  Do not distribute 
-this code base to users on the GPL (open source) version of the FarCry platform.
+> Distributed under the LGPL license; compatible with both the open source and commercial licenses of FarCry Core
 
 [Raygun.io](http://raygun.io/) is a SaaS solution for aggregating error logging, 
 and providing reporting, notification and escallation.  The plugin works by 
