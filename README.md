@@ -18,4 +18,4 @@ You will require a Raygun API key for the application before you begin.
 
 That is all.
 
-![Raygun](https://raygun.io/cassette.axd/file/images/refactor-views/features-page/grouping-60f50b741288ba65e6f86cdabb8737b14a9387e7.png)
+![Raygun](https://raygun.io/images/products/integrations-2.jpg)
