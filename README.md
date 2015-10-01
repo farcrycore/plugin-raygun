@@ -3,7 +3,7 @@
 > Distributed under the LGPL license; compatible with both the open source and commercial licenses of FarCry Core
 
 [Raygun.io](http://raygun.io/) is a SaaS solution for aggregating error logging, 
-and providing reporting, notification and escallation.  The plugin works by 
+and providing reporting, notification and escalation.  The plugin works by 
 overriding the standard `farcry.core.packages.lib.error` component for error processing.
 
 ## Installation
