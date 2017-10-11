@@ -35,7 +35,7 @@
 		<cfset var apiKey = application.fapi.getConfig("raygun", "apiKey", "") />
 		
 		<cfif len(apiKey)>
-			<cfthread action="run" name="log-error" data="#arguments.data#" apiKey="#apiKey#" headers="#getHttpRequestData().headers#">
+			<cfthread action="run" name="log-error-#createuuid()#" data="#arguments.data#" apiKey="#apiKey#" headers="#getHttpRequestData().headers#">
 				<cfset system = createObject("java", "java.lang.System") />
 				<cfset props = system.getProperties() />
 				<cfset mf = createObject("java", "java.lang.management.ManagementFactory") />
@@ -131,6 +131,7 @@
 				<cfset stMessage["details"]["request"]["headers"] = attributes.headers />
 				<cfset stMessage["details"]["request"]["data"] = CGI />
 				<cfset stMessage["details"]["request"]["raw"] = JavaCast("null","") />
+				<cfset stMessage["details"]["request"]["rawData"] = getHTTPRequestData().content />
 				<cfset stMessage["details"]["request"]["session"] = arguments.data.session />
 				<cfset stMessage["details"]["user"] = structnew() />
 				<cfset stMessage["details"]["user"]["identifier"] = arguments.data.username />
