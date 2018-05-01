@@ -149,12 +149,13 @@
 		<cfargument name="varstem" type="string" required="false" default="" />
 		<cfargument name="base" type="any" required="false" />
 		<cfargument name="result" type="struct" required="false" default="#structnew()#" />
-		
+		<cfargument name="depth" type="numeric" required="false" default="0" />
+
 		<cfset var key = "" />
 		<cfset var stem = "" />
 
 		<cfif not structkeyexists(arguments, "base")>
-			<cfif isdefined("session")>
+			<cfif isdefined("session") AND arguments.depth eq 0>
 				<cfset arguments.base = session />
 			<cfelse>
 				<cfreturn arguments.result />
@@ -166,12 +167,12 @@
 		<cfelseif isstruct(arguments.base)>
 			<cfloop collection="#arguments.base#" item="key">
 				<cfif not listfindnocase("Tempobjectstore,Objectadminfilterobjects,Urltoken,Objectadmin,Writingdir,Dmsec.AUTHENTICATION,Sessionid,Userlanguage",listappend(arguments.varstem,key,"."))>
-					<cfset getSession(listappend(arguments.varstem,key,"."),arguments.base[key],arguments.result) />
+					<cfset getSession(listappend(arguments.varstem,key,"."),arguments.base[key],arguments.result,arguments.depth+1) />
 				</cfif>
 			</cfloop>
 		<cfelseif isarray(arguments.base)>
 			<cfloop from="1" to="#arraylen(arguments.base)#" index="key">
-				<cfset getSession(arguments.varstem & "[" & key & "]",arguments.base[key],arguments.result) />
+				<cfset getSession(arguments.varstem & "[" & key & "]",arguments.base[key],arguments.result,arguments.depth+1) />
 			</cfloop>
 		</cfif>
 		
