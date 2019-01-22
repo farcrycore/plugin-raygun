@@ -167,12 +167,16 @@
 		<cfelseif isstruct(arguments.base)>
 			<cfloop collection="#arguments.base#" item="key">
 				<cfif not listfindnocase("Tempobjectstore,Objectadminfilterobjects,Urltoken,Objectadmin,Writingdir,Dmsec.AUTHENTICATION,Sessionid,Userlanguage",listappend(arguments.varstem,key,"."))>
-					<cfset getSession(listappend(arguments.varstem,key,"."),arguments.base[key],arguments.result,arguments.depth+1) />
+					<cfif NOT isNull(arguments.base[key])>
+						<cfset getSession(listappend(arguments.varstem,key,"."),arguments.base[key],arguments.result,arguments.depth+1) />
+					</cfif>
 				</cfif>
 			</cfloop>
 		<cfelseif isarray(arguments.base)>
 			<cfloop from="1" to="#arraylen(arguments.base)#" index="key">
-				<cfset getSession(arguments.varstem & "[" & key & "]",arguments.base[key],arguments.result,arguments.depth+1) />
+				<cfif NOT isNull(arguments.base[key])>
+					<cfset getSession(arguments.varstem & "[" & key & "]",arguments.base[key],arguments.result,arguments.depth+1) />
+				</cfif>
 			</cfloop>
 		</cfif>
 		
