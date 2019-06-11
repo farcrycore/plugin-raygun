@@ -125,7 +125,11 @@
 				<cfset stMessage["details"]["request"]["form"] = structnew() />
 				<cfloop collection="#form#" item="key">
 					<cfif key neq "fieldnames">
-						<cfset stMessage["details"]["request"]["form"][key] = left(form[key],256) />
+						<cfif FindNoCase('password', key)>
+							<cfset stMessage["details"]["request"]["form"][key] = "password removed" />
+						<cfelse>
+							<cfset stMessage["details"]["request"]["form"][key] = left(form[key],256) />
+						</cfif>
 					</cfif>
 				</cfloop>
 				<cfset stMessage["details"]["request"]["headers"] = attributes.headers />
