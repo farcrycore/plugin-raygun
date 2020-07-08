@@ -90,7 +90,6 @@
 				<cfset stMessage["details"]["environment"]["windowBoundsHeight"] = JavaCast("null","") />
 				<cfset stMessage["details"]["environment"]["resolutionScale"] = JavaCast("null","") />
 				<cfset stMessage["details"]["environment"]["currentOrientation"] = JavaCast("null","") />
-				<cfset stMessage["details"]["environment"]["cpu"] = osbean.getProcessCpuTime() />
 				<cfset stMessage["details"]["environment"]["packageVersion"] = props["java.vm.vendor"] & "|" & props["java.runtime.version"] & "|" & props["java.vm.name"] />
 				<cfset stMessage["details"]["environment"]["architecture"] = props["os.arch"] />
 				<cfset stMessage["details"]["environment"]["totalPhysicalMemory"] = osbean.getTotalPhysicalMemorySize() />
