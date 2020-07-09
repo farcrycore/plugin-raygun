@@ -92,8 +92,6 @@
 				<cfset stMessage["details"]["environment"]["currentOrientation"] = JavaCast("null","") />
 				<cfset stMessage["details"]["environment"]["packageVersion"] = props["java.vm.vendor"] & "|" & props["java.runtime.version"] & "|" & props["java.vm.name"] />
 				<cfset stMessage["details"]["environment"]["architecture"] = props["os.arch"] />
-				<cfset stMessage["details"]["environment"]["totalPhysicalMemory"] = osbean.getTotalPhysicalMemorySize() />
-				<cfset stMessage["details"]["environment"]["availablePhysicalMemory"] = osbean.getFreePhysicalMemorySize() />
 				<cfset stMessage["details"]["environment"]["totalVirtualMemory"] = JavaCast("null","") />
 				<cfset stMessage["details"]["environment"]["availableVirtualMemory"] = JavaCast("null","") />
 				<cfset stMessage["details"]["environment"]["diskSpaceFree"] = arraynew(1) />
