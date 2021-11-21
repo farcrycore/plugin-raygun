@@ -31,8 +31,14 @@
 	<cffunction name="logToRaygun" access="public" output="false" returntype="void" hint="Logs data to the couchdb">
 		<cfargument name="type" type="string" required="true" hint="Log type" />
 		<cfargument name="data" type="struct" requried="true" hint="A normalized error struct as produced by the core error library" />
+
+		<cftry>
+			<cfset var apiKey = application.fapi.getConfig("raygun", "apiKey", "") />
+			<cfcatch>
+				<cfset var apiKey = "" />
+			</cfcatch>
+		</cftry>
 		
-		<cfset var apiKey = application.fapi.getConfig("raygun", "apiKey", "") />
 		
 		<cfif len(apiKey)>
 			<cfthread action="run" name="log-error-#createuuid()#" data="#arguments.data#" apiKey="#apiKey#" headers="#getHttpRequestData().headers#">
