@@ -161,11 +161,12 @@
 		<cfset var key = "" />
 		<cfset var stem = "" />
 		<!--- never collected. The original entries are noise or bulk; cfid, cftoken and
-		      jsessionid are session identifiers; fc.directUploads and fc.mfaPending are
-		      transient authorization state. The last two groups are credentials, and this
+		      jsessionid are session identifiers; fc.directUploads, fc.mfaPending and
+		      fc.stMFAEnrol (the TOTP secret during self-service enrolment) are transient
+		      authorization state. The last two groups are credentials, and this
 		      struct is transmitted off-site, so they are excluded at the point of collection
 		      rather than stripped later. --->
-		<cfset var lSkipKeys = "Tempobjectstore,Objectadminfilterobjects,Urltoken,Objectadmin,Writingdir,Dmsec.AUTHENTICATION,Sessionid,Userlanguage,cfid,cftoken,jsessionid,fc.directUploads,fc.mfaPending" />
+		<cfset var lSkipKeys = "Tempobjectstore,Objectadminfilterobjects,Urltoken,Objectadmin,Writingdir,Dmsec.AUTHENTICATION,Sessionid,Userlanguage,cfid,cftoken,jsessionid,fc.directUploads,fc.mfaPending,fc.stMFAEnrol" />
 
 		<cfif not structkeyexists(arguments, "base")>
 			<cfif isdefined("session") AND arguments.depth eq 0>
