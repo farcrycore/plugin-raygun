@@ -128,17 +128,17 @@
 				<cfset stMessage["details"]["request"]["form"] = structnew() />
 				<cfloop collection="#form#" item="key">
 					<cfif key neq "fieldnames">
-						<cfif FindNoCase('password', key)>
-							<cfset stMessage["details"]["request"]["form"][key] = "password removed" />
+						<cfif isSensitiveName(key)>
+							<cfset stMessage["details"]["request"]["form"][key] = "[removed]" />
 						<cfelse>
 							<cfset stMessage["details"]["request"]["form"][key] = left(form[key],256) />
 						</cfif>
 					</cfif>
 				</cfloop>
-				<cfset stMessage["details"]["request"]["headers"] = attributes.headers />
-				<cfset stMessage["details"]["request"]["data"] = CGI />
+				<cfset stMessage["details"]["request"]["headers"] = filterSensitive(attributes.headers) />
+				<cfset stMessage["details"]["request"]["data"] = filterSensitive(CGI) />
 				<cfset stMessage["details"]["request"]["raw"] = JavaCast("null","") />
-				<cfset stMessage["details"]["request"]["rawData"] = getHTTPRequestData().content />
+				<cfset stMessage["details"]["request"]["rawData"] = filterRequestBody(getHTTPRequestData().content, CGI.CONTENT_TYPE) />
 				<cfset stMessage["details"]["request"]["session"] = arguments.data.session />
 				<cfset stMessage["details"]["user"] = structnew() />
 				<cfset stMessage["details"]["user"]["identifier"] = arguments.data.username />
@@ -151,7 +151,78 @@
 			</cfthread>
 		</cfif>
 	</cffunction>
-	
+
+	<cffunction name="isSensitiveName" access="public" output="false" returntype="boolean" hint="True when a form field, header, CGI or JSON key name suggests its value is a credential">
+		<cfargument name="name" type="string" required="true" />
+
+		<cfreturn reFindNoCase("password|secret|token|otp|recovery|code$|apikey|accesskey|signingkey|encryptkey|executionkey|cookie|authorization|cfid|sessionid", arguments.name) gt 0 />
+	</cffunction>
+
+	<cffunction name="filterSensitive" access="public" output="false" returntype="any" hint="Returns a copy of a struct (or scope) or array with the values of sensitive names replaced, at any depth">
+		<cfargument name="data" type="any" required="true" />
+
+		<cfset var result = "" />
+		<cfset var key = "" />
+		<cfset var i = 0 />
+
+		<cfif isstruct(arguments.data)>
+			<cfset result = structnew() />
+			<cfloop collection="#arguments.data#" item="key">
+				<cfif isSensitiveName(key)>
+					<cfset result[key] = "[removed]" />
+				<cfelseif structkeyexists(arguments.data, key)>
+					<cfset result[key] = filterSensitive(arguments.data[key]) />
+				</cfif>
+			</cfloop>
+		<cfelseif isarray(arguments.data)>
+			<cfset result = arraynew(1) />
+			<cfloop from="1" to="#arraylen(arguments.data)#" index="i">
+				<cfif arrayisdefined(arguments.data, i)>
+					<cfset arrayappend(result, filterSensitive(arguments.data[i])) />
+				</cfif>
+			</cfloop>
+		<cfelse>
+			<cfset result = arguments.data />
+		</cfif>
+
+		<cfreturn result />
+	</cffunction>
+
+	<cffunction name="filterRequestBody" access="public" output="false" returntype="any" hint="Returns the raw request body with the values of sensitive names replaced. Url-encoded and JSON bodies are filtered (Lucee rebuilds a url-encoded body from the form scope, so it carries the same fields); one that fails to parse is replaced; other types are sent unchanged.">
+		<cfargument name="content" type="any" required="true" />
+		<cfargument name="contentType" type="string" required="true" />
+
+		<cfset var aPairs = arraynew(1) />
+		<cfset var pair = "" />
+
+		<cfif not issimplevalue(arguments.content) or not len(arguments.content)>
+			<cfreturn arguments.content />
+		</cfif>
+
+		<cftry>
+			<cfif findnocase("application/x-www-form-urlencoded", arguments.contentType)>
+				<cfloop list="#arguments.content#" index="pair" delimiters="&">
+					<cfif isSensitiveName(urldecode(listfirst(pair, "=")))>
+						<cfset arrayappend(aPairs, listfirst(pair, "=") & "=[removed]") />
+					<cfelse>
+						<cfset arrayappend(aPairs, pair) />
+					</cfif>
+				</cfloop>
+				<cfreturn arraytolist(aPairs, "&") />
+			</cfif>
+
+			<cfif findnocase("json", arguments.contentType)>
+				<cfreturn serializeJSON(filterSensitive(deserializeJSON(arguments.content))) />
+			</cfif>
+
+			<cfcatch>
+				<cfreturn "[removed: could not be filtered]" />
+			</cfcatch>
+		</cftry>
+
+		<cfreturn arguments.content />
+	</cffunction>
+
 	<cffunction name="getSession" access="public" output="false" returntype="struct" hint="Returns the session in a flattened-to-dot-notation struct">
 		<cfargument name="varstem" type="string" required="false" default="" />
 		<cfargument name="base" type="any" required="false" />
@@ -160,12 +231,8 @@
 
 		<cfset var key = "" />
 		<cfset var stem = "" />
-		<!--- never collected. The original entries are noise or bulk; cfid, cftoken and
-		      jsessionid are session identifiers; fc.directUploads, fc.mfaPending and fc.stMFAEnrol
-		      are transient authorization state. The last two groups are credentials, and this
-		      struct is transmitted off-site, so they are excluded at the point of collection
-		      rather than stripped later. --->
-		<cfset var lSkipKeys = "Tempobjectstore,Objectadminfilterobjects,Urltoken,Objectadmin,Writingdir,Dmsec.AUTHENTICATION,Sessionid,Userlanguage,cfid,cftoken,jsessionid,fc.directUploads,fc.mfaPending,fc.stMFAEnrol" />
+		<!--- never collected: noise or bulk, personal details, session identifiers and transient authorization state --->
+		<cfset var lSkipKeys = "Tempobjectstore,Objectadminfilterobjects,Urltoken,Objectadmin,Writingdir,Dmsec.AUTHENTICATION,Sessionid,Userlanguage,cfid,cftoken,jsessionid,fc.directUploads,fc.mfaPending,fc.stMFAEnrol,resetPWUserID,stFarCryFormSpamProtection,dmProfile.phone,dmProfile.fax" />
 
 		<cfif not structkeyexists(arguments, "base")>
 			<cfif isdefined("session") AND arguments.depth eq 0>
