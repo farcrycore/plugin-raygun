@@ -188,12 +188,16 @@
 		<cfreturn result />
 	</cffunction>
 
-	<cffunction name="filterRequestBody" access="public" output="false" returntype="any" hint="Returns the raw request body with the values of sensitive names replaced. Url-encoded and JSON bodies are filtered (Lucee rebuilds a url-encoded body from the form scope, so it carries the same fields); one that fails to parse is replaced; other types are sent unchanged.">
+	<cffunction name="filterRequestBody" access="public" output="false" returntype="any" hint="Returns the raw request body with sensitive values replaced: url-encoded and JSON bodies are filtered, multipart and unparseable bodies are replaced, other types are unchanged">
 		<cfargument name="content" type="any" required="true" />
 		<cfargument name="contentType" type="string" required="true" />
 
 		<cfset var aPairs = arraynew(1) />
 		<cfset var pair = "" />
+
+		<cfif findnocase("multipart/", arguments.contentType)>
+			<cfreturn "[removed: multipart, see form]" />
+		</cfif>
 
 		<cfif not issimplevalue(arguments.content) or not len(arguments.content)>
 			<cfreturn arguments.content />
