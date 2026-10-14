@@ -161,11 +161,11 @@
 		<cfset var key = "" />
 		<cfset var stem = "" />
 		<!--- never collected. The original entries are noise or bulk; cfid, cftoken and
-		      jsessionid are session identifiers; fc.directUploads and fc.mfaPending are
-		      transient authorization state. The last two groups are credentials, and this
+		      jsessionid are session identifiers; fc.directUploads, fc.mfaPending and fc.stMFAEnrol
+		      are transient authorization state. The last two groups are credentials, and this
 		      struct is transmitted off-site, so they are excluded at the point of collection
 		      rather than stripped later. --->
-		<cfset var lSkipKeys = "Tempobjectstore,Objectadminfilterobjects,Urltoken,Objectadmin,Writingdir,Dmsec.AUTHENTICATION,Sessionid,Userlanguage,cfid,cftoken,jsessionid,fc.directUploads,fc.mfaPending" />
+		<cfset var lSkipKeys = "Tempobjectstore,Objectadminfilterobjects,Urltoken,Objectadmin,Writingdir,Dmsec.AUTHENTICATION,Sessionid,Userlanguage,cfid,cftoken,jsessionid,fc.directUploads,fc.mfaPending,fc.stMFAEnrol" />
 
 		<cfif not structkeyexists(arguments, "base")>
 			<cfif isdefined("session") AND arguments.depth eq 0>
@@ -179,7 +179,8 @@
 			<cfset arguments.result[arguments.varstem] = arguments.base />
 		<cfelseif isstruct(arguments.base)>
 			<cfloop collection="#arguments.base#" item="key">
-				<cfif not listfindnocase(lSkipKeys,listappend(arguments.varstem,key,"."))>
+				<!--- sessions.<id> holds whole sessions parked by switchSession(), so skip the same keys inside each one --->
+				<cfif not listfindnocase(lSkipKeys,listappend(arguments.varstem,key,".")) and not listfindnocase(lSkipKeys,reReplaceNoCase(listappend(arguments.varstem,key,"."),"^sessions\.[^.]+\.",""))>
 					<cfif NOT isNull(arguments.base[key])>
 						<cfset getSession(listappend(arguments.varstem,key,"."),arguments.base[key],arguments.result,arguments.depth+1) />
 					</cfif>
